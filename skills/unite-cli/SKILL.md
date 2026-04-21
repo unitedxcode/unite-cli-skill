@@ -64,6 +64,302 @@ If PyPI/Homebrew are not live yet, **source install** is the supported path unti
 
 ---
 
+## Storage quota (UNITE.app product defaults)
+
+Every account shares the **same documented caps** in the shipped web app (not tiered in code today):
+
+- **Total uploads per user:** **100 GiB** across your objects in the uploads bucket (constant `STORAGE_LIMIT_BYTES` in `frontend/lib/constants.ts`).
+- **Single file upload (dashboard):** **100 GiB** per file (`SINGLE_FILE_SIZE_LIMIT_BYTES` in `frontend/app/dashboard/constants.ts`).
+- **CLI check:** `unite uploads usage` calls `/uploads/usage` and prints how much you are using; the server enforces the real quota.
+- **If these numbers change in production**, update this skill **and** `docs/README.md` in [unitedxcode/unite-cli-skill](https://github.com/unitedxcode/unite-cli-skill) together with `frontend/lib/constants.ts` / dashboard constants in the monorepo.
+
+## Model catalog — names, default versions, reference genomes
+
+**For LLMs / agents (must follow):** Default versions, reference genomes, and the full version list can change in **production** (including admin catalog upserts) before this skill is updated. **Always pull the live catalog from the backend** before giving definitive model/version/ref advice, choosing `--models` / `--versions`, or generating scripts:
+
+1. **Preferred:** `unite models list` and `unite models show "MODEL_NAME"` — they call **`GET /models/catalog`** on the user’s configured base URL (same JSON the website uses).
+2. **HTTP without the CLI:** `GET {UNITE_BASE_URL}/models/catalog` (default via the shipped proxy: `https://www.unitedx.app/api/backend/models/catalog`). Use the same residency / `provider` rules as other backend calls if your client requires them.
+
+If the live response **differs** from the table or fenced JSON **below**, or from `docs/README.md`, **use the latest pull from the backend** and treat this file as a stale convenience snapshot until a human regenerates it from `backend/model_catalog.json` on `main`.
+
+**Repo reference (offline / release-time disk catalog):** `backend/model_catalog.json` on [unitedx/UNITE.app](https://github.com/unitedx/UNITE.app) `main` is what a **fresh backend image** loads at deploy time. The table and fenced JSON here are a **point-in-time snapshot** for agents without network access; each model still lists **all** `versions[]` and per-version `version_ref_genomes` in that JSON for copy-paste.
+
+| Model | Default version | Default ref | Inputs | Notes |
+|-------|-----------------|-------------|--------|-------|
+| `DELFI-NRLAB` | `2025.01.03.hg38` | hg38 | bam | — |
+| `FILE-SIZE` | `2026.03.30` | — | bam | — |
+| `FRAGLE` | `2024.12.20.hg38` | hg38 | bam | — |
+| `FrEIA` | `2024.12.18.hg38` | hg38 | bam | — |
+| `LIONHEART` | `2024.12.12.hg38` | hg38 | bam | — |
+| `Mega-learner` | `2025.01.12.hg38` | hg38 | bam | primary_rank=2 |
+| `UNITE-CNN` | `2026.03.30.hg38` | hg38 | bam | primary_rank=3 |
+| `UNITE-LLM` | `2025.01.05.hg38` | hg38 | bam | primary_rank=4 |
+| `UNITE-XGB` | `2026.03.30.hg19` | hg19 | bam | primary_rank=1 |
+| `ichorCNA-TF` | `2024.12.25.hg38` | hg38 | bam | — |
+
+### Full `model_catalog.json` (copy-paste authoritative snapshot)
+
+Regenerate this fenced block whenever `backend/model_catalog.json` changes.
+
+```json
+{
+  "DELFI-NRLAB": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2025.01.03.hg38",
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.11.05.hg19": "hg19",
+      "2024.11.05.hg38": "hg38",
+      "2024.11.28.hg19": "hg19",
+      "2024.11.28.hg38": "hg38",
+      "2025.01.03.hg19": "hg19",
+      "2025.01.03.hg38": "hg38"
+    },
+    "versions": [
+      "2025.01.03.hg38",
+      "2025.01.03.hg19",
+      "2024.11.28.hg38",
+      "2024.11.28.hg19",
+      "2024.11.05.hg38",
+      "2024.11.05.hg19"
+    ]
+  },
+  "FILE-SIZE": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": null,
+    "default_version": "2026.03.30",
+    "ref_genome": null,
+    "versions": [
+      "2026.03.30"
+    ]
+  },
+  "FRAGLE": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2024.12.20.hg38",
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.10.25.hg19": "hg19",
+      "2024.10.25.hg38": "hg38",
+      "2024.11.18.hg19": "hg19",
+      "2024.11.18.hg38": "hg38",
+      "2024.12.20.hg19": "hg19",
+      "2024.12.20.hg38": "hg38"
+    },
+    "versions": [
+      "2024.12.20.hg38",
+      "2024.12.20.hg19",
+      "2024.11.18.hg38",
+      "2024.11.18.hg19",
+      "2024.10.25.hg38",
+      "2024.10.25.hg19"
+    ]
+  },
+  "FrEIA": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2024.12.18.hg38",
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.10.22.hg19": "hg19",
+      "2024.10.22.hg38": "hg38",
+      "2024.11.15.hg19": "hg19",
+      "2024.11.15.hg38": "hg38",
+      "2024.12.18.hg19": "hg19",
+      "2024.12.18.hg38": "hg38"
+    },
+    "versions": [
+      "2024.12.18.hg38",
+      "2024.12.18.hg19",
+      "2024.11.15.hg38",
+      "2024.11.15.hg19",
+      "2024.10.22.hg38",
+      "2024.10.22.hg19"
+    ]
+  },
+  "LIONHEART": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2024.12.12.hg38",
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.10.18.hg19": "hg19",
+      "2024.10.18.hg38": "hg38",
+      "2024.11.10.hg19": "hg19",
+      "2024.11.10.hg38": "hg38",
+      "2024.12.12.hg19": "hg19",
+      "2024.12.12.hg38": "hg38"
+    },
+    "versions": [
+      "2024.12.12.hg38",
+      "2024.12.12.hg19",
+      "2024.11.10.hg38",
+      "2024.11.10.hg19",
+      "2024.10.18.hg38",
+      "2024.10.18.hg19"
+    ]
+  },
+  "Mega-learner": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2025.01.12.hg38",
+    "primary_rank": 2,
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.11.20.hg19": "hg19",
+      "2024.11.20.hg38": "hg38",
+      "2024.12.15.hg19": "hg19",
+      "2024.12.15.hg38": "hg38",
+      "2025.01.12.hg19": "hg19",
+      "2025.01.12.hg38": "hg38"
+    },
+    "versions": [
+      "2025.01.12.hg38",
+      "2025.01.12.hg19",
+      "2024.12.15.hg38",
+      "2024.12.15.hg19",
+      "2024.11.20.hg38",
+      "2024.11.20.hg19"
+    ]
+  },
+  "UNITE-CNN": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {
+      "2026.03.30.hg19": {
+        "sha256": "44a1cb1f8e7b8c012f766930905721998e8bdecfd6188c612fa9f413d8c83471",
+        "uri": "artifactregistry://us-central1/ml-models/unite-cnn/2026.03.30/CNN.pkl"
+      }
+    },
+    "cutoff": 0.5,
+    "default_version": "2026.03.30.hg38",
+    "primary_rank": 3,
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.11.12.hg19": "hg19",
+      "2024.11.12.hg38": "hg38",
+      "2024.12.05.hg19": "hg19",
+      "2024.12.05.hg38": "hg38",
+      "2025.01.08.hg19": "hg19",
+      "2025.01.08.hg38": "hg38",
+      "2026.03.30.hg19": "hg19",
+      "2026.03.30.hg38": "hg38"
+    },
+    "versions": [
+      "2026.03.30.hg38",
+      "2026.03.30.hg19",
+      "2025.01.08.hg38",
+      "2025.01.08.hg19",
+      "2024.12.05.hg38",
+      "2024.12.05.hg19",
+      "2024.11.12.hg38",
+      "2024.11.12.hg19"
+    ]
+  },
+  "UNITE-LLM": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2025.01.05.hg38",
+    "primary_rank": 4,
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.11.08.hg19": "hg19",
+      "2024.11.08.hg38": "hg38",
+      "2024.12.01.hg19": "hg19",
+      "2024.12.01.hg38": "hg38",
+      "2025.01.05.hg19": "hg19",
+      "2025.01.05.hg38": "hg38"
+    },
+    "versions": [
+      "2025.01.05.hg38",
+      "2025.01.05.hg19",
+      "2024.12.01.hg38",
+      "2024.12.01.hg19",
+      "2024.11.08.hg38",
+      "2024.11.08.hg19"
+    ]
+  },
+  "UNITE-XGB": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {
+      "2025.01.10.hg19": {
+        "uri": "artifactregistry://us-central1/ml-models/unite-xgb/2025.01.10/model.pkl"
+      },
+      "2026.03.30.hg19": {
+        "sha256": "3ea2cebb2ed39601d35c5c72123f418f51adf962c107b24b66f3dc4f9fb001e3",
+        "uri": "artifactregistry://us-central1/ml-models/unite-xgb/2026.03.30/XGB.pkl"
+      }
+    },
+    "cutoff": 0.5,
+    "default_version": "2026.03.30.hg19",
+    "primary_rank": 1,
+    "ref_genome": "hg19",
+    "version_ref_genomes": {
+      "2024.11.15.hg19": "hg19",
+      "2024.12.08.hg19": "hg19",
+      "2025.01.10.hg19": "hg19",
+      "2026.03.30.hg19": "hg19"
+    },
+    "versions": [
+      "2026.03.30.hg19",
+      "2025.01.10.hg19",
+      "2024.12.08.hg19",
+      "2024.11.15.hg19"
+    ]
+  },
+  "ichorCNA-TF": {
+    "accepted_inputs": [
+      "bam"
+    ],
+    "artifacts": {},
+    "cutoff": 0.5,
+    "default_version": "2024.12.25.hg38",
+    "ref_genome": "hg38",
+    "version_ref_genomes": {
+      "2024.10.30.hg19": "hg19",
+      "2024.10.30.hg38": "hg38",
+      "2024.11.22.hg19": "hg19",
+      "2024.11.22.hg38": "hg38",
+      "2024.12.25.hg19": "hg19",
+      "2024.12.25.hg38": "hg38"
+    },
+    "versions": [
+      "2024.12.25.hg38",
+      "2024.12.25.hg19",
+      "2024.11.22.hg38",
+      "2024.11.22.hg19",
+      "2024.10.30.hg38",
+      "2024.10.30.hg19"
+    ]
+  }
+}
+```
+
 ## First-time login (critical for agents helping non-coders)
 
 ### What the user must have first

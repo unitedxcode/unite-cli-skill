@@ -16,6 +16,49 @@ You need:
 
 ---
 
+## Storage limits (what you can upload)
+
+UNITE applies the **same caps to every account** in the shipped product today (not tiered in code):
+
+- **Total space for your uploads:** **100 GiB** combined across all files you store in UNITE.
+- **Largest single file (website upload):** **100 GiB** per file.
+
+To see how much you are using from the terminal after you are logged in, run:
+
+```bash
+unite uploads usage
+```
+
+That calls the same quota the website uses. If these numbers ever change in production, they will be updated in the main [UNITE.app](https://github.com/unitedx/UNITE.app) repository first; refresh this guide or the [skill](../skills/unite-cli/SKILL.md) if something looks out of date.
+
+---
+
+## Analysis models (names, versions, reference genomes)
+
+Each **model** (for example UNITE-XGB) has a **default version** and a **reference genome** (for example hg19 or hg38). Older versions may still exist for reproducibility. The table below matches the current **`model_catalog.json`** on UNITE.app `main`.
+
+**If you use an AI assistant:** production can update before this page does. Ask it to use **`unite models list`** (same data as the website’s catalog) or to call the live **`/models/catalog`** API; if that output disagrees with the table here, **trust the live pull**.
+
+| Model | Default version | Default reference | Inputs |
+|-------|-----------------|-------------------|--------|
+| DELFI-NRLAB | 2025.01.03.hg38 | hg38 | BAM |
+| FILE-SIZE | 2026.03.30 | — | BAM |
+| FRAGLE | 2024.12.20.hg38 | hg38 | BAM |
+| FrEIA | 2024.12.18.hg38 | hg38 | BAM |
+| LIONHEART | 2024.12.12.hg38 | hg38 | BAM |
+| Mega-learner | 2025.01.12.hg38 | hg38 | BAM |
+| UNITE-CNN | 2026.03.30.hg38 | hg38 | BAM |
+| UNITE-LLM | 2025.01.05.hg38 | hg38 | BAM |
+| UNITE-XGB | 2026.03.30.hg19 | hg19 | BAM |
+| ichorCNA-TF | 2024.12.25.hg38 | hg38 | BAM |
+
+**Authoritative list (every version and per-version reference):**  
+[github.com/unitedx/UNITE.app/blob/main/backend/model_catalog.json](https://github.com/unitedx/UNITE.app/blob/main/backend/model_catalog.json)
+
+The [agent skill](../skills/unite-cli/SKILL.md) repeats this table and embeds a **full JSON snapshot** for assistants that need copy-paste accuracy.
+
+---
+
 ## Install `unite` on your computer
 
 ### Option A — pipx (recommended)
