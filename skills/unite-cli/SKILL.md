@@ -542,6 +542,209 @@ Header sent: **`X-Admin-Token`** (from env or profile). All admin routes are
 
 ---
 
+## Recipe snippets (copy-paste workflows)
+
+**Maintainers:** when **`unite` commands, flags, HTTP routes, or JSON response
+shapes** change, update this section **and** the shorter examples in
+[`docs/README.md`](https://github.com/unitedxcode/unite-cli-skill/blob/main/docs/README.md)
+in lockstep (see repo rule **unite-cli-skill-dual-repo**).
+
+**Conventions used below**
+
+- **`--json`** on the global `unite` command (e.g. `unite --json runs submit …`)
+  prints machine-readable JSON to stdout; use `jq` where shown.
+- **`--file`** for runs accepts a cloud URI (`gs://…`, `oss://…`) **or** the
+  shorthand **`unite://uploads/<object-name>`** (object name as shown in
+  `unite uploads list`).
+- **Model IDs** in `--models` are comma-separated; matching is **case- and
+  punctuation-insensitive** (e.g. `unite-xgb` ≡ `UNITE-XGB`). Confirm live
+  names/versions with **`unite models list`** before scripting.
+- **Bash loops** assume macOS/Linux **bash**. On Windows, use **Git Bash**,
+  **WSL**, or translate to PowerShell.
+
+### A — Folder of local BAMs → upload each → UNITE-XGB on each
+
+Sequential (gentle on the API); each line is easy to debug.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+shopt -s nullglob
+for f in /path/to/cohort/*.bam; do
+  echo "=== uploading: $f ==="
+  URI=$(unite --json uploads upload "$f" --type bam | jq -r .uri)
+  echo "=== submit UNITE-XGB: $URI ==="
+  RID=$(unite --json runs submit --file "$URI" --models unite-xgb | jq -r .run_id)
+  echo "$f uploaded; run_id=$RID"
+done
+```
+
+**Already in the cloud bucket** (URIs from a spreadsheet): skip `uploads upload`
+and pass each `--file` directly.
+
+**Rate limits / fairness:** for dozens of samples, keep sequential loops or
+add `sleep 2` between submits; avoid hundreds of parallel jobs unless your org
+agrees on throughput.
+
+### B — Only submit: every uploaded `.bam` already in UNITE
+
+```bash
+unite --json uploads list --limit 500 \
+  | jq -r '.files[]? | select(.name|test("\\.bam$"; "i")) | .uri' \
+  | while read -r uri; do
+      rid=$(unite --json runs submit --file "$uri" --models unite-xgb | jq -r .run_id)
+      echo "submitted ${rid} for ${uri}"
+    done
+```
+
+If `jq` reports `null` URIs, run **`unite uploads list`** once without `--json`
+to see column names; some payloads use `gcs_uri` instead of `uri`.
+
+### C — One alignment → many models (single `model_inference` run)
+
+```bash
+URI=$(unite --json uploads upload ./tumor.bam --type bam | jq -r .uri)
+unite runs submit \
+  --file "$URI" \
+  --models unite-xgb,unite-cnn,unite-llm,file-size
+```
+
+Pin versions (optional); JSON must map **canonical** model keys the API expects
+(check **`unite models show "UNITE-XGB"`** then mirror the spelling you use in
+`--models`):
+
+```bash
+unite runs submit \
+  --file "$URI" \
+  --models unite-xgb,unite-cnn \
+  --versions '{"unite-xgb":"2026.03.30.hg19","unite-cnn":"2026.03.30.hg38"}'
+```
+
+Or read versions from a file:
+
+```bash
+unite runs submit --file "$URI" --models unite-xgb --versions @./versions.json
+```
+
+### D — Wait, then download results (one run)
+
+```bash
+RUN_ID=$(unite --json runs submit --file unite://uploads/sample.bam --models unite-xgb | jq -r .run_id)
+unite runs wait "$RUN_ID" --timeout 4h --interval 30s
+unite runs download "$RUN_ID" -o "./results/${RUN_ID}" --only results,report
+```
+
+`--only` filters by backend **category** (comma-separated). Omit it to fetch
+everything the run exposes.
+
+### E — Batch: many run IDs in a file → wait and download each
+
+```bash
+while read -r rid; do
+  [[ -z "$rid" || "$rid" =~ ^# ]] && continue
+  unite runs wait "$rid" --timeout 8h || echo "wait failed for $rid" >&2
+  unite runs download "$rid" -o "./out/${rid}"
+done < run_ids.txt
+```
+
+### F — Paired FASTQ → align → scores (`pipeline-submit`)
+
+Uses **`--file`** (R1), optional **`--file-r2`** (R2), **`--steps`** as a comma
+list, and **`--reference`** `hg19` or `hg38` when the pipeline includes
+`fastq_to_bam`.
+
+```bash
+unite uploads upload ./sample_R1.fastq.gz --type fastq_r1
+unite uploads upload ./sample_R2.fastq.gz --type fastq_r2
+unite runs pipeline-submit \
+  --file unite://uploads/sample_R1.fastq.gz \
+  --file-r2 unite://uploads/sample_R2.fastq.gz \
+  --steps fastq_to_bam,model_inference \
+  --reference hg38 \
+  --models unite-cnn
+```
+
+Optional per-step overrides (only when your team documents the JSON shape):
+
+```bash
+unite runs pipeline-submit \
+  --file unite://uploads/sample_R1.fastq.gz \
+  --file-r2 unite://uploads/sample_R2.fastq.gz \
+  --steps fastq_to_bam,model_inference \
+  --reference hg38 \
+  --models unite-xgb \
+  --step-params @./pipeline-step-params.json
+```
+
+Use `{}` or omit `--step-params` entirely if you do not have a vetted file.
+
+### G — Single CRAM (and optional index) for model runs
+
+```bash
+unite uploads upload ./sample.cram --type cram
+unite uploads upload ./sample.cram.bai --type bai   # if you have a sidecar index
+URI=$(unite --json uploads list --limit 20 | jq -r '.files[] | select(.name=="sample.cram") | .uri')
+unite runs submit --file "$URI" --models unite-cnn
+```
+
+### H — Inspect status / artifacts without waiting
+
+```bash
+unite runs status RUN_ID
+unite runs artifacts RUN_ID
+unite runs score RUN_ID          # headline score when available
+unite runs params RUN_ID         # resolved params JSON
+```
+
+### I — Re-run a finished job in place
+
+```bash
+unite runs rerun RUN_ID
+```
+
+### J — Storage hygiene before a big cohort upload
+
+```bash
+unite uploads usage
+unite uploads list --limit 200
+# delete a mistaken object (short object path or full gs:// URI works):
+# unite uploads delete path/to/object.bam
+```
+
+### K — Detect reference build on an uploaded BAM/CRAM
+
+Requires the **full** `gs://` or `oss://` URI (copy from `unite uploads list`).
+
+```bash
+unite uploads detect-ref "gs://your-bucket/uploads/USERID/sample.bam"
+```
+
+### L — Staging / second account (`--profile` + `--base-url`)
+
+```bash
+unite --profile dev --base-url https://your-staging-host login --token-file ./staging-login.json
+unite --profile dev --base-url https://your-staging-host whoami
+unite --profile dev --base-url https://your-staging-host uploads list
+```
+
+### M — CI / automation (no OS keyring)
+
+```bash
+export UNITE_NO_KEYRING=1
+export UNITE_CONFIG_DIR="$(pwd)/.unite-ci"
+mkdir -p "$UNITE_CONFIG_DIR"
+unite login --no-browser --token-file ./tokens.json
+unite --json runs list --limit 5 | jq .
+```
+
+### N — JSON discovery tip for agents
+
+If a `jq` path stops working after an upgrade, run the same command **without**
+`jq` once (or with `| tee last.json`) and inspect keys. **`unite … --json`**
+is the supported contract for scripts.
+
+---
+
 ## Exit codes (for agents & CI)
 
 | Code | Meaning |
@@ -619,6 +822,15 @@ Tag **must** match `cli/pyproject.toml` version per workflow gates.
 
 - Pin scripts to **`--json`** and exit codes **3 / 5 / 6** for retry vs fail-fast.
 - Set **`UNITE_CONFIG_DIR`** in CI with ephemeral dirs + `UNITE_NO_KEYRING=1`.
+
+### Audience: maintainers (CLI + skill authors)
+
+Whenever you change **CLI flags**, **command names**, **backend routes**, or
+**JSON response shapes** consumed by scripts, update **both** the **Recipe
+snippets** section in this file **and** the worked examples in
+`unite-cli-skill/docs/README.md`, and extend the **unite-cli-skill-dual-repo**
+checklist if new doc surfaces appear. Agents rely on these blocks being
+executable.
 
 ### When to defer to humans
 

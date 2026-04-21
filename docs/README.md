@@ -137,14 +137,57 @@ You should see your email or user id and `signed_in: true`. After a successful l
 
 ## Everyday tasks (examples)
 
-Your assistant can expand these; exact flags are in the [skill file](../skills/unite-cli/SKILL.md).
+Your assistant can expand these; **full copy-paste recipes** (batch BAMs, pipelines,
+CI, and more) live in the [skill file](../skills/unite-cli/SKILL.md) under **“Recipe snippets”**.
 
 - **List files you uploaded:** `unite uploads list`
+- **See how much storage you are using:** `unite uploads usage`
 - **Upload sequencing reads:** `unite uploads upload your_file.fastq.gz --type fastq_r1`
 - **List your runs:** `unite runs list`
-- **Download results for a run:** `unite runs download RUN_ID --output ./my-results/`
+- **Download results for a run:** `unite runs download RUN_ID -o ./my-results/`
 
 Replace `RUN_ID` with the id shown in `unite runs list` or on the website.
+
+---
+
+## More examples (batch work, models)
+
+These use **`unite --json …`** so a script or assistant can parse output (`jq` is
+optional but handy). On **Windows**, run them in **Git Bash** or **WSL** unless
+you translate the loop yourself.
+
+### Folder of BAM files → UNITE-XGB on each sample
+
+1. Log in once (`unite login`, see above).
+2. Run this loop (change the folder path):
+
+```bash
+for f in /path/to/your/bams/*.bam; do
+  uri=$(unite --json uploads upload "$f" --type bam | jq -r .uri)
+  rid=$(unite --json runs submit --file "$uri" --models unite-xgb | jq -r .run_id)
+  echo "Started run $rid for $f"
+done
+```
+
+Ask your assistant to **wait and download** when jobs finish (`unite runs wait`
+then `unite runs download`)—patterns are in the [skill recipes](../skills/unite-cli/SKILL.md).
+
+### One sample, several models at once
+
+```bash
+unite runs submit \
+  --file unite://uploads/my-sample.bam \
+  --models unite-xgb,unite-cnn,file-size
+```
+
+### Check models and versions from the live server
+
+```bash
+unite models list
+unite models show "UNITE-XGB"
+```
+
+If that output disagrees with a table in the docs or skill, **trust these commands**—they read production.
 
 ---
 
