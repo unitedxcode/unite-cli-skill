@@ -1,0 +1,139 @@
+# UNITE.app — `unite` CLI (user guide)
+
+This page is for **anyone** who wants to run [UNITE.app](https://www.unitedx.app) from the terminal—**including people who have never used a command line before**. Your AI assistant (Cursor, ChatGPT, etc.) can follow this together with the [agent skill](../skills/unite-cli/SKILL.md) to walk you through each step.
+
+---
+
+## What you are installing
+
+**UNITE** is a genomics / diagnostics platform in the browser. The **`unite`** program is the **official command-line interface**: upload files, start analysis runs, download results—the same actions as the website, from your computer.
+
+You need:
+
+1. A **free UNITE account** — sign up at [unitedx.app](https://www.unitedx.app).
+2. **Python 3.10 or newer** on your computer ([python.org](https://www.python.org/downloads/) or your system package manager).
+3. About **five minutes** for the first-time login (one-time setup).
+
+---
+
+## Install `unite` on your computer
+
+### Option A — pipx (recommended)
+
+`pipx` keeps `unite` in its own environment so it does not conflict with other Python tools.
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+# open a new terminal window, then:
+pipx install unite-cli
+unite --version
+```
+
+If `unite-cli` is not on PyPI yet, install **from source** using the instructions in the [UNITE.app](https://github.com/unitedx/UNITE.app) repository (`cli/` folder).
+
+### Option B — pip
+
+```bash
+pip install --user unite-cli
+unite --version
+```
+
+### After install
+
+Run:
+
+```bash
+unite --help
+```
+
+You should see a list of commands (`login`, `uploads`, `runs`, …). If the command is not found, make sure your terminal’s `PATH` includes pip’s user bin directory (pipx usually tells you what to add).
+
+---
+
+## First-time sign-in (important)
+
+The CLI uses the **same login** as the website. You never type your password into the terminal; you copy a **short-lived token** from the browser.
+
+1. Open [https://www.unitedx.app](https://www.unitedx.app) and **sign in**.
+2. Open the CLI login helper page: **[https://www.unitedx.app/cli/auth](https://www.unitedx.app/cli/auth)**  
+3. Click **Copy JSON** (best option—it includes refresh so the CLI stays signed in longer).
+
+### Easiest way to finish login (no giant paste in the terminal)
+
+Save the clipboard to a file, for example on your Desktop:
+
+- **macOS:** paste into TextEdit, save as `unite-login.json`.
+- **Windows:** paste into Notepad, save as `unite-login.json`.
+
+Then run (change the path to your file):
+
+```bash
+unite login --token-file ~/Desktop/unite-login.json
+```
+
+### macOS shortcut (one line)
+
+If you already used **Copy JSON** in the browser:
+
+```bash
+pbpaste | unite login --no-browser
+```
+
+### Check that it worked
+
+```bash
+unite whoami
+```
+
+You should see your email or user id and `signed_in: true`. After a successful login, the CLI prints a line ending with **`./authenticated`**—that is only a friendly message, not a folder on your disk.
+
+**Sign out later:** `unite logout`
+
+---
+
+## Everyday tasks (examples)
+
+Your assistant can expand these; exact flags are in the [skill file](../skills/unite-cli/SKILL.md).
+
+- **List files you uploaded:** `unite uploads list`
+- **Upload sequencing reads:** `unite uploads upload your_file.fastq.gz --type fastq_r1`
+- **List your runs:** `unite runs list`
+- **Download results for a run:** `unite runs download RUN_ID --output ./my-results/`
+
+Replace `RUN_ID` with the id shown in `unite runs list` or on the website.
+
+---
+
+## Using an AI assistant safely
+
+- **Do not paste live login tokens** into public forums, shared screenshots, or untrusted chat logs.
+- It is OK to run `unite login` **on your own machine** and keep the JSON file **private** on your disk.
+- If an assistant suggests deleting data or running **admin** commands, double-check on the website or with your team first.
+
+---
+
+## Something went wrong?
+
+| Symptom | What to try |
+|---------|----------------|
+| `command not found: unite` | Re-open the terminal; confirm `pipx` / `pip` finished without errors; check `PATH`. |
+| `AUTH_REQUIRED` or login fails | Get a fresh **Copy JSON** from `/cli/auth` and run `unite login` again. |
+| `503` / `backend_not_configured` | Your region’s cloud may be temporarily unavailable—try again later or check [unitedx.app](https://www.unitedx.app) status. |
+| Paste is awkward in the terminal | Always prefer **`unite login --token-file path/to/file.json`** or **`pbpaste \| unite login --no-browser`** on macOS. |
+
+More detail for **developers and automation** (JSON output, exit codes, cloud regions) is in the [SKILL.md](../skills/unite-cli/SKILL.md) reference.
+
+---
+
+## License
+
+- The **text** in this `docs/` folder and the **skill** under `skills/` are under the [MIT license](../LICENSE) in this repository—you may copy them into your own projects.
+- The **UNITE.app product**, website, and **`unite` program source code** remain proprietary; see the [UNITE.app](https://github.com/unitedx/UNITE.app) repository for software and contribution terms.
+
+---
+
+## Where this repo fits
+
+- **This repo (`unitedxcode/unite-cli-skill`):** public skill + this user guide—safe to share and fork for Cursor / agents.
+- **Product source:** [github.com/unitedx/UNITE.app](https://github.com/unitedx/UNITE.app) — application, backend, and CLI implementation.
