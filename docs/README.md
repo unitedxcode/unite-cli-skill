@@ -1,6 +1,6 @@
 # UNITE.app — `unite` CLI (user guide)
 
-This page is for **anyone** who wants to run [UNITE.app](https://www.unitedx.app) from the terminal—**including people who have never used a command line before**. Your AI assistant (Cursor, ChatGPT, etc.) can follow this together with the [agent skill](../skills/unite-cli/SKILL.md) to walk you through each step.
+This page is for **anyone** who wants to run [UNITE.app](https://www.unitedx.app) from the terminal—**including people who have never used a command line before**. Your AI assistant (**Cursor**, **Codex**, **Copilot**, **Claude**, ChatGPT, etc.) can follow this together with the [agent skill](../skills/unite-cli/SKILL.md) to walk you through each step. You do **not** need Cursor—any tool that can read those Markdown files works.
 
 ---
 
@@ -135,5 +135,5 @@ More detail for **developers and automation** (JSON output, exit codes, cloud re
 
 ## Where this repo fits
 
-- **This repo (`unitedxcode/unite-cli-skill`):** public skill + this user guide—safe to share and fork for Cursor / agents.
+- **This repo (`unitedxcode/unite-cli-skill`):** public skill + this user guide—safe to share and fork for any agentic workflow (IDE skills, CLI agents, or chat).
 - **Product source:** [github.com/unitedx/UNITE.app](https://github.com/unitedx/UNITE.app) — application, backend, and CLI implementation.

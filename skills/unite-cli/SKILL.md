@@ -4,7 +4,8 @@ description: >
   Complete reference for the UNITE.app unite-cli (Typer): install, auth, every
   command group, flags, JSON mode, residency, uploads, admin, exit codes,
   troubleshooting, and how LLM/agents should guide users—including zero coding
-  experience—safely and step-by-step.
+  experience—safely and step-by-step. Works with Cursor, Codex, Claude Code, or
+  any agent that can load this SKILL as context or via a skills directory.
 ---
 
 # UNITE.app — `unite-cli` skill
@@ -17,8 +18,14 @@ assuming programming background**.
 **New here?** Read the plain-language guide:  
 [docs/README.md](https://github.com/unitedxcode/unite-cli-skill/blob/main/docs/README.md) (same repo as the public **MIT** skill bundle: [unitedxcode/unite-cli-skill](https://github.com/unitedxcode/unite-cli-skill)).
 
-**Clone layout:** copy `skills/unite-cli/` from that repo into your project’s  
-`.cursor/skills/unite-cli/` so Cursor can load this file.
+**Using this skill (any agentic tool):** the MIT bundle lives at  
+`skills/unite-cli/SKILL.md` in [unitedxcode/unite-cli-skill](https://github.com/unitedxcode/unite-cli-skill).  
+- **Cursor:** copy `skills/unite-cli/` → `.cursor/skills/unite-cli/` in your project.  
+- **Codex CLI, Copilot agents, Claude Code, custom runners:** follow that product’s
+  “skills” or project-instructions path, **or** simply attach / `@`-include
+  `SKILL.md` in a session—no Cursor-specific layout is required.  
+- **Plain chat UIs:** paste or upload `SKILL.md` (and optionally `docs/README.md`)
+  so the model has the full contract.
 
 **Inside the UNITE.app monorepo only:** developer docs live at `cli/README.md`;
 source under `cli/`; releases via `.github/workflows/release-cli.yml` (`cli-v*` tags).
@@ -342,7 +349,9 @@ Tag **must** match `cli/pyproject.toml` version per workflow gates.
 
 - **This skill markdown** is published under **MIT** in
   [unitedxcode/unite-cli-skill](https://github.com/unitedxcode/unite-cli-skill)
-  (`skills/unite-cli/SKILL.md`); copy that folder into any project’s `.cursor/skills/unite-cli/`.
+  (`skills/unite-cli/SKILL.md`); copy or reference that file in whatever skills
+  or instructions layout your agent stack uses (Cursor’s `.cursor/skills/` is
+  one example, not a requirement).
 - **User-facing prose** for non-coders lives in that repo’s `docs/README.md`.
 - **UNITE.app product and `unite-cli` implementation** remain proprietary; see
   the UNITE.app repository’s license terms.
